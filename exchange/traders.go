@@ -11,10 +11,10 @@ func handleError(err error) {
 }
 
 func main() {
-	alice, err := trader.NewTrader("Alice")
+	alice, err := trader.NewTrader("Alice", "127.0.0.1", 8001)
 	handleError(err)
 
-	bob, err := trader.NewTrader("Bob")
+	bob, err := trader.NewTrader("Bob", "127.0.0.1", 8002)
 	handleError(err)
 
 	//Alice offers to buy

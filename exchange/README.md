@@ -12,15 +12,19 @@ mkdir alice
 mkdir bob
 ```
 
-Download and extract the latest release
-Double check if below is the latest one [here](https://github.com/mit-dci/lit/releases)
-
+Download and build the latest lit code base
 ```
-wget https://github.com/mit-dci/lit/releases/download/0.1/lit_v0.1_amd64linux.tar.xz
-tar -xvf lit_v0.1_amd64linux.tar.xz
+git clone https://github.com/mit-dci/lit.git
+cd lit && go build
+cd cmd/lit-af/ && go build
+
 ```
 
 Create lit configuration files:
+```
+cd $HOME/dlcexchange
+```
+
 ```
 nano alice/lit.conf
 ```
@@ -47,4 +51,14 @@ tracker=http://hubris.media.mit.edu:46580
 autoListenPort=:2449
 autoReconnect=true
 autoReconnectInterval=5
+```
+
+Run Alice
+```
+./lit/lit -v --dir alice
+```
+
+Run Bob
+```
+./lit/lit -v --dir bob
 ```

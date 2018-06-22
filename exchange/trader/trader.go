@@ -22,10 +22,10 @@ func (t *Trader) Sell(price int, quantity int) error {
 	return nil
 }
 
-func NewTrader(name string) (*Trader, error) {
+func NewTrader(name string, host string, port int32) (*Trader, error) {
 	t := new(Trader)
   t.Name = name
-  l, err := litrpcclient.NewClient("127.0.0.1", 8001)
+  l, err := litrpcclient.NewClient(host, port)
   handleError(err)
   t.Lit = l
 	return t, nil
