@@ -17,10 +17,10 @@ func main() {
 	bob, err := trader.NewTrader("Bob")
 	handleError(err)
 
-	//Alice offers to buy 100 USDU18 at 15000 satoshis
+	//Alice offers to buy
 	err = alice.Buy(15000, 100)
 	handleError(err)
-	//Bob offers to sell 100 USDU18 at 15000 satoshis
- 	err = bob.Sell(15000,100)
+	//Bob offers to sell
+ 	err = bob.Sell(15100,100)
 	handleError(err)
 }

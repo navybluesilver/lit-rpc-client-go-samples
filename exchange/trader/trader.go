@@ -2,10 +2,12 @@ package trader
 
 import (
 	"fmt"
+  "github.com/mit-dci/lit-rpc-client-go"
 )
 
 type Trader struct {
 	Name string
+  Lit *litrpcclient.LitRpcClient
 }
 
 //Buy future for the given price and quantity
@@ -21,7 +23,16 @@ func (t *Trader) Sell(price int, quantity int) error {
 }
 
 func NewTrader(name string) (*Trader, error) {
-	client := new(Trader)
-  client.Name = name
-	return client, nil
+	t := new(Trader)
+  t.Name = name
+  l, err := litrpcclient.NewClient("127.0.0.1", 8001)
+  handleError(err)
+  t.Lit = l
+	return t, nil
+}
+
+func handleError(err error) {
+	if err != nil {
+		panic(err.Error())
+	}
 }
