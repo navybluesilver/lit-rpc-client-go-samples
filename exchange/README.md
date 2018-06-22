@@ -6,8 +6,8 @@ Complete Steps 1 and 2 in [lit test setup](https://github.com/mit-dci/lit/blob/m
 Create working directory:
 ```
 cd $HOME
-mkdir dlctutorial
-cd dlctutorial
+mkdir dlcexchange
+cd dlcexchange
 mkdir alice
 mkdir bob
 ```
