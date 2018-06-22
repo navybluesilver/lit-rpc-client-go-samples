@@ -20,5 +20,5 @@ func handleError(err error) {
 func main() {
 	m, err := trader.NewTrader("Market Maker", mHost, mPort, nil)
 	handleError(err)
-	m.MakeMarket(2448)
+	m.MakeMarket(mListenPort)
 }

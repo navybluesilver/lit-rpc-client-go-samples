@@ -12,12 +12,6 @@ const (
 	mListenPort uint32 = 2448
 )
 
-func handleError(err error) {
-	if err != nil {
-		panic(err.Error())
-	}
-}
-
 func main() {
 	m, err := trader.NewTrader("Market Maker", mHost, mPort, nil)
 	handleError(err)
@@ -39,6 +33,7 @@ func main() {
 
 	fmt.Println("")
 
+	fmt.Println("Start trading...")
 	//Alice offers to buy
 	err = alice.Buy(15000, 100)
 	handleError(err)
@@ -46,15 +41,22 @@ func main() {
 	//Bob offers to sell
  	err = bob.Sell(15100,100)
 	handleError(err)
+	fmt.Println("Done trading.")
 
-	fmt.Println("Done.")
+	fmt.Println("All done.")
 }
 
-// Connect to given market maker if it was delivered
+// Connect to the market maker
 func connect(t *trader.Trader, m *trader.Trader)  {
 	mLNAddr, err := m.Lit.GetLNAddress()
 	handleError(err)
 	fmt.Printf("Connecting %s to %s [%s@%s:%d]\n", t.Name, m.Name, mLNAddr, mHost, mListenPort)
 	err = t.Lit.Connect(mLNAddr, mHost, mListenPort)
 	handleError(err)
+}
+
+func handleError(err error) {
+	if err != nil {
+		panic(err.Error())
+	}
 }
