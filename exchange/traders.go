@@ -6,9 +6,9 @@ import (
 )
 
 const (
-	coinType uint32 = 257
-	mHost string = "127.0.0.1"
-  mPort int32 = 8001
+	coinType    uint32 = 257
+	mHost       string = "127.0.0.1"
+	mPort       int32  = 8001
 	mListenPort uint32 = 2448
 )
 
@@ -39,7 +39,7 @@ func main() {
 	handleError(err)
 
 	//Bob offers to sell
- 	err = bob.Sell(15100,100)
+	err = bob.Sell(15100, 100)
 	handleError(err)
 	fmt.Println("Done trading.")
 
@@ -47,7 +47,7 @@ func main() {
 }
 
 // Connect to the market maker
-func connect(t *trader.Trader, m *trader.Trader)  {
+func connect(t *trader.Trader, m *trader.Trader) {
 	mLNAddr, err := m.Lit.GetLNAddress()
 	handleError(err)
 	fmt.Printf("Connecting %s to %s [%s@%s:%d]\n", t.Name, m.Name, mLNAddr, mHost, mListenPort)

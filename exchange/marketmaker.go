@@ -5,9 +5,9 @@ import (
 )
 
 const (
-	coinType uint32 = 257
-	mHost string = "127.0.0.1"
-  mPort int32 = 8001
+	coinType    uint32 = 257
+	mHost       string = "127.0.0.1"
+	mPort       int32  = 8001
 	mListenPort uint32 = 2448
 )
 
