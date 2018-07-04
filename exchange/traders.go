@@ -35,11 +35,11 @@ func main() {
 
 	fmt.Println("Start trading...")
 	//Alice offers to buy
-	err = alice.Buy(15000, 100)
+	err = alice.Buy(15000, 10)
 	handleError(err)
 
 	//Bob offers to sell
-	err = bob.Sell(15100, 100)
+	err = bob.Sell(15000, 20)
 	handleError(err)
 	fmt.Println("Done trading.")
 
