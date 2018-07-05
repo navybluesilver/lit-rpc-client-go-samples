@@ -172,27 +172,7 @@ func (t *Trader) sendContract(ourFunding, theirFunding, valueFullyOurs, valueFul
 	return nil
 }
 
-func isContractValidOrder(contractIdx int) (b bool, err error) {
-	//OurPayoutBase or TheirPayoutBase should be 0, but not both
-	//TheirFunding AND OurFunding should not be 0
-
-	//TheirPayoutBase 0 => Sell
-	//OurPayoutBase 0 => Buy
-
-	//if a sell
-	//OurPayoutBase should be greater than TheirPayoutBase
-	//price = OurPayoutBase / (1 + margin)
-	//quantity = TheirFunding / price
-
-	//if a Buy
-	//TheirPayoutBase should be greater than OurPayoutBase
-	//price = TheirPayoutBase / ( 1 + margin)
-	//quantity = OurFunding / price
-	return true, nil
-}
-
 func (t *Trader) convertContractToOrder(contractIdx uint64) (o Order, err error) {
-	//TODO: If the contract is not a valid order, decline it
 
 	c, err := t.Lit.GetContract(contractIdx)
 	handleError(err)
@@ -217,35 +197,52 @@ func (t *Trader) convertContractToOrder(contractIdx uint64) (o Order, err error)
 	var valueFullyOurs int64
 	var valueFullyTheirs int64
 
-	if o.AskBidInd == "BID" {
-		// if it is a bid, valueFullyOurs is 0
-		// valueFullyTheirs is the minimum oracle value that gives us 0
-		valueFullyOurs = 0
-		for _, d := range c.Division {
-			if d.ValueOurs == 0 {
-				if valueFullyTheirs == 0 {
-					valueFullyTheirs = d.OracleValue
-				}
-				if d.OracleValue <= valueFullyTheirs  {
-	        valueFullyTheirs = d.OracleValue
-				}
+	// valueFullyTheirs is the minimum oracle value that gives us 0
+	for _, d := range c.Division {
+		if d.ValueOurs == 0 {
+			if valueFullyTheirs == 0 {
+				valueFullyTheirs = d.OracleValue
 			}
+			if d.OracleValue <= valueFullyTheirs  {
+				valueFullyTheirs = d.OracleValue
+			}
+		}
+	}
+
+	// valueFullyOurs is the minimum oracle value that gives us OurFundingAmount + TheirFundingAmount
+	for _, d := range c.Division {
+		if d.ValueOurs == c.OurFundingAmount + c.TheirFundingAmount {
+			if valueFullyOurs == 0 {
+				valueFullyOurs = d.OracleValue
+			}
+			if d.OracleValue <= valueFullyOurs  {
+				valueFullyOurs = d.OracleValue
+			}
+		}
+	}
+
+	if o.AskBidInd == "BID" {
+		// if it is a bid,
+		// valueFullyOurs should be 0
+		// valueFullyTheirs should not be 0
+		if valueFullyOurs != 0 {
+			return o, fmt.Errorf("valueFullyOurs for a bid should be 0")
+		}
+		if valueFullyTheirs == 0 {
+			return o, fmt.Errorf("valueFullyTheirs for a bid should not be 0")
 		}
 		o.Price = int(valueFullyTheirs) / (1 + margin)
 		o.Quantity = int(c.OurFundingAmount) / o.Price
 	} else {
-		// if its is an ask, valueFullyTheirs is 0
-		// valueFullyOurs is the minimum oracle value that gives us OurFundingAmount + TheirFundingAmount
-		valueFullyTheirs = 0
-		for _, d := range c.Division {
-			if d.ValueOurs == c.OurFundingAmount + c.TheirFundingAmount {
-				if valueFullyOurs == 0 {
-					valueFullyOurs = d.OracleValue
-				}
-				if d.OracleValue <= valueFullyOurs  {
-					valueFullyOurs = d.OracleValue
-				}
-			}
+		// if its is an ask
+		// valueFullyOurs should not be 0
+		// valueFullyTheirs should be 0
+		if valueFullyOurs == 0 {
+			return o, fmt.Errorf("valueFullyOurs for a bid should not be 0")
+		}
+
+		if valueFullyTheirs != 0 {
+			return o, fmt.Errorf("valueFullyTheirs for an ask should be 0")
 		}
 		o.Price = int(valueFullyOurs) / (1 + margin)
 		o.Quantity = int(c.TheirFundingAmount) / o.Price
@@ -267,8 +264,13 @@ func (t *Trader) GetOrderBook() error {
 	for _, c := range allContracts {
 		if c.Status == 2 {
 			o, err := t.convertContractToOrder(c.Idx)
-			handleError(err)
-			orders = append(orders, o)
+			if err != nil {
+					//TODO: If the contract is not a valid order, decline it
+					t.Lit.DeclineContract(c.Idx)
+					fmt.Printf("Declined contract [%v]: %v", c.Idx, err )
+			} else {
+					orders = append(orders, o)
+			}
 		}
 	}
 
