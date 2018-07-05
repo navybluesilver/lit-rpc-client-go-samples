@@ -2,8 +2,8 @@ package trader
 
 import (
 	"fmt"
-	"time"
 	"github.com/mit-dci/lit-rpc-client-go"
+	"time"
 )
 
 const (
@@ -21,11 +21,11 @@ type Trader struct {
 }
 
 type Order struct {
-	PeerIdx uint32
+	PeerIdx     uint32
 	ContractIdx uint64
-	AskBidInd string
-	Price int
-	Quantity int
+	AskBidInd   string
+	Price       int
+	Quantity    int
 }
 
 // Return a new trader
@@ -89,7 +89,7 @@ func (m *Trader) MakeMarket(port uint32) error {
 	err := m.Lit.Listen(fmt.Sprintf(":%d", port))
 	handleError(err)
 	fmt.Printf("Running %s ...\n", m.Name)
-	for wait := true; wait; wait = (1 == 1)  {
+	for wait := true; wait; wait = (1 == 1) {
 		m.GetOrderBook()
 		time.Sleep(1 * time.Millisecond)
 	}
@@ -180,14 +180,12 @@ func (t *Trader) convertContractToOrder(contractIdx uint64) (o Order, err error)
 	o.PeerIdx = c.PeerIdx
 	o.ContractIdx = c.Idx
 
-
-	if c.OurFundingAmount == 0  &&  c.TheirFundingAmount == 0 {
+	if c.OurFundingAmount == 0 && c.TheirFundingAmount == 0 {
 		return o, fmt.Errorf("OurFundingAmount and TheirFundingAmount cannot both be 0")
 	}
 
-
 	// identify if it is a bid or an ask based on the funding
-	if c.OurFundingAmount <  c.TheirFundingAmount {
+	if c.OurFundingAmount < c.TheirFundingAmount {
 		o.AskBidInd = "BID" // asking a certain price for the instrument, usually higher than the market price, usually triggered by a sell order
 	} else {
 		o.AskBidInd = "ASK" // bidding a certain price for the instrument, usually lower than the market price, usually triggered by a buy order
@@ -203,7 +201,7 @@ func (t *Trader) convertContractToOrder(contractIdx uint64) (o Order, err error)
 			if valueFullyTheirs == 0 {
 				valueFullyTheirs = d.OracleValue
 			}
-			if d.OracleValue <= valueFullyTheirs  {
+			if d.OracleValue <= valueFullyTheirs {
 				valueFullyTheirs = d.OracleValue
 			}
 		}
@@ -211,11 +209,11 @@ func (t *Trader) convertContractToOrder(contractIdx uint64) (o Order, err error)
 
 	// valueFullyOurs is the minimum oracle value that gives us OurFundingAmount + TheirFundingAmount
 	for _, d := range c.Division {
-		if d.ValueOurs == c.OurFundingAmount + c.TheirFundingAmount {
+		if d.ValueOurs == c.OurFundingAmount+c.TheirFundingAmount {
 			if valueFullyOurs == 0 {
 				valueFullyOurs = d.OracleValue
 			}
-			if d.OracleValue <= valueFullyOurs  {
+			if d.OracleValue <= valueFullyOurs {
 				valueFullyOurs = d.OracleValue
 			}
 		}
@@ -265,11 +263,11 @@ func (t *Trader) GetOrderBook() error {
 		if c.Status == 2 {
 			o, err := t.convertContractToOrder(c.Idx)
 			if err != nil {
-					//TODO: If the contract is not a valid order, decline it
-					t.Lit.DeclineContract(c.Idx)
-					fmt.Printf("Declined contract [%v]: %v", c.Idx, err )
+				//TODO: If the contract is not a valid order, decline it
+				t.Lit.DeclineContract(c.Idx)
+				fmt.Printf("Declined contract [%v]: %v", c.Idx, err)
 			} else {
-					orders = append(orders, o)
+				orders = append(orders, o)
 			}
 		}
 	}
