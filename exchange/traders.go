@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	trader "github.com/mit-dci/lit-rpc-client-go-samples/exchange/trader"
+	"math/rand"
+	"time"
 )
 
 const (
@@ -13,6 +15,13 @@ const (
 )
 
 func main() {
+	for wait := true; wait; wait = (1 == 1) {
+		tradingSimulation()
+		time.Sleep(10000 * time.Millisecond)
+	}
+}
+
+func tradingSimulation() {
 	m, err := trader.NewTrader("Market Maker", mHost, mPort, nil)
 	handleError(err)
 
@@ -35,11 +44,11 @@ func main() {
 
 	fmt.Println("Start trading...")
 	//Alice offers to buy
-	err = alice.Buy(15000, 10)
+	err = alice.Buy(randInt(15100, 15600), 1)
 	handleError(err)
 
 	//Bob offers to sell
-	err = bob.Sell(15000, 20)
+	err = bob.Sell(randInt(14600, 14900), 1)
 	handleError(err)
 	fmt.Println("Done trading.")
 
@@ -59,4 +68,13 @@ func handleError(err error) {
 	if err != nil {
 		panic(err.Error())
 	}
+}
+
+func randInt(min int, max int) int {
+	rand.Seed(time.Now().UTC().UnixNano())
+	return min + rand.Intn(max-min)
+}
+
+func invalidOrders() {
+	//
 }

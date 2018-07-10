@@ -1,3 +1,10 @@
+# DLC Exchange
+
+This code is for education purposes only. It has a lot of limitations:
+* Bad performance, mostly because of looping through the contracts one by one
+* Unable to cancel orders
+* Unable to close positions early
+
 # Bitcoin Core Regtest
 
 Complete Steps 1 and 2 in [lit test setup](https://github.com/mit-dci/lit/blob/master/docs/test-setup.md)

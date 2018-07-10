@@ -3,6 +3,7 @@ package trader
 import (
 	"fmt"
 	"github.com/mit-dci/lit-rpc-client-go"
+	orderbook "github.com/mit-dci/lit-rpc-client-go-samples/exchange/orderbook"
 	"time"
 )
 
@@ -20,12 +21,10 @@ type Trader struct {
 	Lit  *litrpcclient.LitRpcClient
 }
 
-type Order struct {
-	PeerIdx     uint32
-	ContractIdx uint64
-	AskBidInd   string
-	Price       int
-	Quantity    int
+func handleError(err error) {
+	if err != nil {
+		panic(err.Error())
+	}
 }
 
 // Return a new trader
@@ -84,18 +83,6 @@ func (t *Trader) GetBalance(coinType uint32) {
 	}
 }
 
-// Accept profitable trades
-func (m *Trader) MakeMarket(port uint32) error {
-	err := m.Lit.Listen(fmt.Sprintf(":%d", port))
-	handleError(err)
-	fmt.Printf("Running %s ...\n", m.Name)
-	for wait := true; wait; wait = (1 == 1) {
-		m.GetOrderBook()
-		time.Sleep(1 * time.Millisecond)
-	}
-	return nil
-}
-
 // Check if the oracle exists
 func (t *Trader) oracleExists() (bool, error) {
 	allOracles, err := t.Lit.ListOracles()
@@ -123,6 +110,7 @@ func (t *Trader) getOracleIdx(oracleName string) (uint64, error) {
 }
 
 // Return the market maker peer index
+// TODO: should not be hardcoded to 1
 func (t *Trader) getMarketMakerIdx() (uint32, error) {
 	return 1, nil
 }
@@ -172,23 +160,25 @@ func (t *Trader) sendContract(ourFunding, theirFunding, valueFullyOurs, valueFul
 	return nil
 }
 
-func (t *Trader) convertContractToOrder(contractIdx uint64) (o Order, err error) {
+// Converts a lit contract into an ask or bid order
+func (t *Trader) convertContractToOrder(contractIdx uint64) (o orderbook.Order, err error) {
 
+	// Get the contract from lit and copy the peerIdx and ContractIdx to the order
 	c, err := t.Lit.GetContract(contractIdx)
 	handleError(err)
+	o.PeerIdx = int(c.PeerIdx)
+	o.ContractIdx = int(c.Idx)
 
-	o.PeerIdx = c.PeerIdx
-	o.ContractIdx = c.Idx
-
+	// Make sure that both parties provide funding
 	if c.OurFundingAmount == 0 && c.TheirFundingAmount == 0 {
 		return o, fmt.Errorf("OurFundingAmount and TheirFundingAmount cannot both be 0")
 	}
 
 	// identify if it is a bid or an ask based on the funding
 	if c.OurFundingAmount < c.TheirFundingAmount {
-		o.AskBidInd = "BID" // asking a certain price for the instrument, usually higher than the market price, usually triggered by a sell order
+		o.AskBidInd = "ASK" // asking a certain price for the instrument, usually higher than the market price, usually triggered by a sell order
 	} else {
-		o.AskBidInd = "ASK" // bidding a certain price for the instrument, usually lower than the market price, usually triggered by a buy order
+		o.AskBidInd = "BID" // bidding a certain price for the instrument, usually lower than the market price, usually triggered by a buy order
 	}
 
 	// identify valueFullyOurs and valueFullyTheirs
@@ -219,20 +209,20 @@ func (t *Trader) convertContractToOrder(contractIdx uint64) (o Order, err error)
 		}
 	}
 
-	if o.AskBidInd == "BID" {
-		// if it is a bid,
+	if o.AskBidInd == "ASK" {
+		// if it is a ask,
 		// valueFullyOurs should be 0
 		// valueFullyTheirs should not be 0
 		if valueFullyOurs != 0 {
-			return o, fmt.Errorf("valueFullyOurs for a bid should be 0")
+			return o, fmt.Errorf("valueFullyOurs for a ask should be 0")
 		}
 		if valueFullyTheirs == 0 {
-			return o, fmt.Errorf("valueFullyTheirs for a bid should not be 0")
+			return o, fmt.Errorf("valueFullyTheirs for a ask should not be 0")
 		}
 		o.Price = int(valueFullyTheirs) / (1 + margin)
 		o.Quantity = int(c.OurFundingAmount) / o.Price
 	} else {
-		// if its is an ask
+		// if its is an bid
 		// valueFullyOurs should not be 0
 		// valueFullyTheirs should be 0
 		if valueFullyOurs == 0 {
@@ -240,7 +230,7 @@ func (t *Trader) convertContractToOrder(contractIdx uint64) (o Order, err error)
 		}
 
 		if valueFullyTheirs != 0 {
-			return o, fmt.Errorf("valueFullyTheirs for an ask should be 0")
+			return o, fmt.Errorf("valueFullyTheirs for an bid should be 0")
 		}
 		o.Price = int(valueFullyOurs) / (1 + margin)
 		o.Quantity = int(c.TheirFundingAmount) / o.Price
@@ -250,8 +240,7 @@ func (t *Trader) convertContractToOrder(contractIdx uint64) (o Order, err error)
 }
 
 //Return all buy and sell offers
-func (t *Trader) GetOrderBook() error {
-	var orders []Order
+func (t *Trader) getAllOrders() (orders []orderbook.Order, err error) {
 	//Get all Contracts
 	allContracts, err := t.Lit.ListContracts()
 	handleError(err)
@@ -265,20 +254,40 @@ func (t *Trader) GetOrderBook() error {
 			if err != nil {
 				//TODO: If the contract is not a valid order, decline it
 				t.Lit.DeclineContract(c.Idx)
-				fmt.Printf("Declined contract [%v]: %v", c.Idx, err)
+				fmt.Printf("Declined contract [%v]: %v\n", c.Idx, err)
 			} else {
 				orders = append(orders, o)
 			}
 		}
 	}
-
-	fmt.Printf("[%s]: %v\n", time.Now().Format("20060102150405"), orders)
-
-	return nil
+	return orders, nil
 }
 
-func handleError(err error) {
-	if err != nil {
-		panic(err.Error())
+// Accept profitable trades
+func (m *Trader) MakeMarket(port uint32) error {
+	fmt.Printf("[%s]- Running: %v\n", time.Now().Format("20060102150405"),m.Name)
+
+	// Listen for new offers
+	err := m.Lit.Listen(fmt.Sprintf(":%d", port))
+	handleError(err)
+
+	// Endless loop to check if there are any contracts to accept
+	for loop := true; loop; loop = (1 == 1) {
+		allOrders, err := m.getAllOrders()
+		handleError(err)
+		c, err := orderbook.GetContractsToAccept(allOrders)
+		if err != nil {
+			if err.Error() == "Nothing to accept." {
+				return err
+			}
+			handleError(err)
+		}
+		// TODO: handle not enough satoshis to accept contract
+		for _, i := range c {
+			err := m.Lit.AcceptContract(uint64(i))
+			handleError(err)
+			fmt.Printf("[%s]- Accepted contract [%v]\n", time.Now().Format("20060102150405"),i)
+		}
 	}
+	return nil
 }
