@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	coinType    uint32 = 257
+	coinType    uint32 = 1
 	mHost       string = "127.0.0.1"
 	mPort       int32  = 8001
 	mListenPort uint32 = 2448

@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	coinType    uint32 = 257
+	coinType    uint32 = 1
 	mHost       string = "127.0.0.1"
 	mPort       int32  = 8001
 	mListenPort uint32 = 2448
@@ -17,7 +17,7 @@ const (
 func main() {
 	for wait := true; wait; wait = (1 == 1) {
 		tradingSimulation()
-		time.Sleep(10000 * time.Millisecond)
+		time.Sleep(3000000 * time.Millisecond)
 	}
 }
 
@@ -44,11 +44,11 @@ func tradingSimulation() {
 
 	fmt.Println("Start trading...")
 	//Alice offers to buy
-	err = alice.Buy(randInt(15100, 15600), 1)
+	err = alice.Buy(randInt(18400, 19000), 1)
 	handleError(err)
 
 	//Bob offers to sell
-	err = bob.Sell(randInt(14600, 14900), 1)
+	err = bob.Sell(randInt(17400, 18300), 1)
 	handleError(err)
 	fmt.Println("Done trading.")
 

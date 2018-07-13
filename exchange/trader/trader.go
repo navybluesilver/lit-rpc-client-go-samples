@@ -1,9 +1,11 @@
 package trader
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/mit-dci/lit-rpc-client-go"
 	orderbook "github.com/mit-dci/lit-rpc-client-go-samples/exchange/orderbook"
+	"net/http"
 	"time"
 )
 
@@ -11,14 +13,23 @@ const (
 	oracleUrl      string = "https://oracle.gertjaap.org"
 	oracleName     string = "SPOT"
 	datasourceId   uint64 = 2 // xBT/EUR SPOT
-	settlementTime uint64 = 1528848000
-	coinType       uint32 = 257
+	settlementTime uint64 = 1531296000
+	coinType       uint32 = 1
 	margin         int    = 2
 )
 
 type Trader struct {
 	Name string
 	Lit  *litrpcclient.LitRpcClient
+}
+
+type Rpoint struct {
+	R string `json:"R"`
+}
+
+type OracleSignature struct {
+	Signature string `json:"signature"`
+	Value     int    `json:"value"`
 }
 
 func handleError(err error) {
@@ -112,7 +123,7 @@ func (t *Trader) getOracleIdx(oracleName string) (uint64, error) {
 // Return the market maker peer index
 // TODO: should not be hardcoded to 1
 func (t *Trader) getMarketMakerIdx() (uint32, error) {
-	return 1, nil
+	return 2, nil
 }
 
 // Create and offer the contract to the market maker
@@ -249,6 +260,7 @@ func (t *Trader) getAllOrders() (orders []orderbook.Order, err error) {
 	//TODO: should not have to loop through all contracts one by oracle
 	//TODO: should have the ability to completly remove contracts
 	for _, c := range allContracts {
+		// contracts offered to me
 		if c.Status == 2 {
 			o, err := t.convertContractToOrder(c.Idx)
 			if err != nil {
@@ -259,13 +271,19 @@ func (t *Trader) getAllOrders() (orders []orderbook.Order, err error) {
 				orders = append(orders, o)
 			}
 		}
+		// contracts active, past settlement date
+		if c.Status == 6 && int(c.OracleTimestamp) < int(time.Now().Unix()) {
+			v, s := GetOracleSignature()
+			t.Lit.SettleContract(c.Idx, v, s)
+			fmt.Printf("Settle contract [%v] at %v satoshis\n", c.Idx, v)
+		}
 	}
 	return orders, nil
 }
 
 // Accept profitable trades
 func (m *Trader) MakeMarket(port uint32) error {
-	fmt.Printf("[%s]- Running: %v\n", time.Now().Format("20060102150405"),m.Name)
+	fmt.Printf("[%s]- Running: %v\n", time.Now().Format("20060102150405"), m.Name)
 
 	// Listen for new offers
 	err := m.Lit.Listen(fmt.Sprintf(":%d", port))
@@ -278,16 +296,75 @@ func (m *Trader) MakeMarket(port uint32) error {
 		c, err := orderbook.GetContractsToAccept(allOrders)
 		if err != nil {
 			if err.Error() == "Nothing to accept." {
-				return err
+				fmt.Printf("[%s]- %v\n", time.Now().Format("20060102150405"), err.Error())
+				time.Sleep(10000 * time.Millisecond)
+			} else {
+				handleError(err)
 			}
-			handleError(err)
-		}
-		// TODO: handle not enough satoshis to accept contract
-		for _, i := range c {
-			err := m.Lit.AcceptContract(uint64(i))
-			handleError(err)
-			fmt.Printf("[%s]- Accepted contract [%v]\n", time.Now().Format("20060102150405"),i)
+		} else {
+			// TODO: handle not enough satoshis to accept contract
+			for _, i := range c {
+				err := m.Lit.AcceptContract(uint64(i))
+				handleError(err)
+				fmt.Printf("[%s]- Accepted contract [%v]\n", time.Now().Format("20060102150405"), i)
+			}
 		}
 	}
 	return nil
+}
+
+// Return Bids
+func (m *Trader) GetBids() (bids []orderbook.Order) {
+	allOrders, err := m.getAllOrders()
+	handleError(err)
+	bids, _, _, _, err = orderbook.GetBidsAsks(allOrders)
+	handleError(err)
+	return bids
+}
+
+// Return Asks
+func (m *Trader) GetAsks() (asks []orderbook.Order) {
+	allOrders, err := m.getAllOrders()
+	handleError(err)
+	_, asks, _, _, err = orderbook.GetBidsAsks(allOrders)
+	handleError(err)
+	return asks
+}
+
+func GetR(timestamp int) string {
+	var r Rpoint
+
+	req, err := http.NewRequest("GET", fmt.Sprintf("https://oracle.gertjaap.org/api/rpoint/2/%d", timestamp), nil)
+	handleError(err)
+
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
+	handleError(err)
+
+	defer resp.Body.Close()
+
+	err = json.NewDecoder(resp.Body).Decode(&r)
+	handleError(err)
+
+	return r.R
+}
+
+func GetOracleSignature() (oracleValue int64, oracleSignature []byte) {
+	var sig OracleSignature
+
+	req, err := http.NewRequest("GET", fmt.Sprintf("https://oracle.gertjaap.org/api/publication/%s", GetR(int(settlementTime))), nil)
+	handleError(err)
+
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
+	handleError(err)
+
+	defer resp.Body.Close()
+
+	err = json.NewDecoder(resp.Body).Decode(&sig)
+	handleError(err)
+
+	return int64(sig.Value), []byte(sig.Signature)
 }
