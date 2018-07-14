@@ -25,24 +25,15 @@ func tradingSimulation() {
 	m, err := trader.NewTrader("Market Maker", mHost, mPort, nil)
 	handleError(err)
 
-	fmt.Println("Starting Alice...")
+	fmt.Printf("[%s]- Starting Alice...\n", time.Now().Format("20060102150405"))
 	alice, err := trader.NewTrader("Alice", "127.0.0.1", 8002, m)
-	alice.GetBalance(coinType)
 	connect(alice, m)
-	fmt.Println("Alice Done.")
 
-	fmt.Println("")
-
-	fmt.Println("Starting Bob...")
+	fmt.Printf("[%s]- Starting Bob...\n", time.Now().Format("20060102150405"))
 	bob, err := trader.NewTrader("Bob", "127.0.0.1", 8003, m)
 	handleError(err)
-	bob.GetBalance(coinType)
 	connect(bob, m)
-	fmt.Println("Bob Done.")
 
-	fmt.Println("")
-
-	fmt.Println("Start trading...")
 	//Alice offers to buy
 	err = alice.Buy(randInt(18400, 19000), 1)
 	handleError(err)
@@ -50,16 +41,13 @@ func tradingSimulation() {
 	//Bob offers to sell
 	err = bob.Sell(randInt(17400, 18300), 1)
 	handleError(err)
-	fmt.Println("Done trading.")
-
-	fmt.Println("All done.")
 }
 
 // Connect to the market maker
 func connect(t *trader.Trader, m *trader.Trader) {
 	mLNAddr, err := m.Lit.GetLNAddress()
 	handleError(err)
-	fmt.Printf("Connecting %s to %s [%s@%s:%d]\n", t.Name, m.Name, mLNAddr, mHost, mListenPort)
+	fmt.Printf("[%s]- Connecting %s to %s [%s@%s:%d]\n", time.Now().Format("20060102150405"), t.Name, m.Name, mLNAddr, mHost, mListenPort)
 	err = t.Lit.Connect(mLNAddr, mHost, mListenPort)
 	handleError(err)
 }

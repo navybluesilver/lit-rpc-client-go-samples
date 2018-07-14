@@ -57,7 +57,7 @@ func NewTrader(name string, host string, port int32, m *Trader) (*Trader, error)
 // Buy future for the given price and quantity
 // Calculate the funding and division based of the configured margin
 func (t *Trader) Buy(price, quantity int) error {
-	fmt.Printf("%s offers to buy %d items at %d xBT\n", t.Name, quantity, price)
+	fmt.Printf("[%s]- %s offers to buy %d items at %d xBT\n", time.Now().Format("20060102150405"), t.Name, quantity, price)
 	ourFunding := int64(price * quantity)
 	theirFunding := int64((price * quantity) * margin)
 	valueFullyOurs := int64(0)
@@ -69,7 +69,7 @@ func (t *Trader) Buy(price, quantity int) error {
 // Sell future for the given price and quantity
 // Calculate the funding and division based of the configured margin
 func (t *Trader) Sell(price, quantity int) error {
-	fmt.Printf("%s offers to sell %d items at %d xBT\n", t.Name, quantity, price)
+	fmt.Printf("[%s]- %s offers to sell %d items at %d xBT\n", time.Now().Format("20060102150405"), t.Name, quantity, price)
 	ourFunding := int64((price * quantity) * margin)
 	theirFunding := int64(price * quantity)
 	valueFullyOurs := int64(price + (price * margin))
@@ -88,8 +88,7 @@ func (t *Trader) GetBalance(coinType uint32) {
 
 	for _, b := range allBal {
 		if b.CoinType == coinType {
-			fmt.Printf("Trader: %s | CoinType: %d | SyncHeight: %d | Utxos: %d | WitConf: %d| Channel: %d | Address: %s\n",
-				t.Name, b.CoinType, b.SyncHeight, b.TxoTotal, b.MatureWitty, b.ChanTotal, addr)
+			fmt.Printf("[%s]- Trader: %s | CoinType: %d | SyncHeight: %d | Utxos: %d | WitConf: %d| Channel: %d | Address: %s\n", time.Now().Format("20060102150405"), t.Name, b.CoinType, b.SyncHeight, b.TxoTotal, b.MatureWitty, b.ChanTotal, addr)
 		}
 	}
 }
@@ -123,7 +122,7 @@ func (t *Trader) getOracleIdx(oracleName string) (uint64, error) {
 // Return the market maker peer index
 // TODO: should not be hardcoded to 1
 func (t *Trader) getMarketMakerIdx() (uint32, error) {
-	return 2, nil
+	return 1, nil
 }
 
 // Create and offer the contract to the market maker
@@ -166,7 +165,7 @@ func (t *Trader) sendContract(ourFunding, theirFunding, valueFullyOurs, valueFul
 	peerIdx, err := t.getMarketMakerIdx()
 	err = t.Lit.OfferContract(contract.Idx, peerIdx)
 	handleError(err)
-	fmt.Printf("%s offers contract: ourFunding [%d] | theirFunding [%d] | valueFullyOurs [%d] | valueFullyTheirs [%d]\n", t.Name, ourFunding, theirFunding, valueFullyOurs, valueFullyTheirs)
+	fmt.Printf("[%s]- %s offers contract: ourFunding [%d] | theirFunding [%d] | valueFullyOurs [%d] | valueFullyTheirs [%d]\n", time.Now().Format("20060102150405"), t.Name, ourFunding, theirFunding, valueFullyOurs, valueFullyTheirs)
 
 	return nil
 }
