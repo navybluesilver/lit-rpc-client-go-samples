@@ -267,7 +267,7 @@ func (t *Trader) getAllOrders() (orders []orderbook.Order, err error) {
 			o, err := t.convertContractToOrder(c.Idx)
 			if err != nil {
 				//TODO: If the contract is not a valid order, decline it
-				t.Lit.ContractRespond(c.Idx, false)
+				t.Lit.DeclineContract(c.Idx)
 				fmt.Printf("Declined contract [%v]: %v\n", c.Idx, err)
 			} else {
 				orders = append(orders, o)
@@ -300,7 +300,7 @@ func (m *Trader) MakeMarket(port uint32) error {
 		} else {
 			// TODO: handle not enough satoshis to accept contract
 			for _, i := range c {
-				err := m.Lit.ContractRespond(uint64(i), true)
+				err := m.Lit.AcceptContract(uint64(i))
 				handleError(err)
 				fmt.Printf("[%s]- Accepted contract [%v]\n", time.Now().Format("20060102150405"), i)
 			}
