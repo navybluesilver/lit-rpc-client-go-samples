@@ -1,0 +1,76 @@
+<html>
+<head>
+    <title>{{ .MarketMaker }}</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+</head>
+
+<body>
+<main>
+<div class="container">
+  <table id = "instrument" class="table">
+    <h1>{{ .Instrument }}</h1>
+    <tr>
+      <th>Underlying</th>
+      <td>{{ .Underlying }}</td>
+    </tr>
+    <tr>
+      <th>Settlement Date</th>
+      <td>{{ .SettlementDate }}</td>
+    </tr>
+    <tr>
+      <th>SPOT Price</th>
+      <td>{{ .SPOT }}</td>
+    </tr>
+  </table>
+  <table id = "technical" class="table">
+    <h2>Technical Details</h2>
+    <tr>
+      <th>Counterparty</th>
+      <td>{{ .MarketMakerLNAddress }}</td>
+    </tr>
+    <tr>
+      <th>Oracle Public Key</th>
+      <td>{{ .Oracle }}</td>
+    </tr>
+    <tr>
+      <th>Oracle Rpoint</th>
+      <td>{{ .Rpoint }}</td>
+    </tr>
+  </table>
+</div>
+<div class="container">
+<table id = "asks" class="table">
+  <h2>Asks</h2>
+  <tr>
+    <th>Price</th>
+    <th>Quantity</th>
+  </tr>
+  {{- range .Asks }}
+  <tr>
+  <td>{{ .Price }}</td>
+  <td>{{ .Quantity }}</td>
+  </tr>
+  {{- end}}
+</table>
+<table id = "bids" class="table">
+  <h2>Bids</h2>
+  <tr>
+    <th>Price</th>
+    <th>Quantity</th>
+  </tr>
+  {{- range .Bids }}
+  <tr>
+  <td>{{ .Price }}</td>
+  <td>{{ .Quantity }}</td>
+  </tr>
+  {{- end}}
+</table>
+</div>
+</main>
+</body>
+<footer>
+</footer>
+</html>

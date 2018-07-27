@@ -10,10 +10,12 @@ import (
 )
 
 const (
+	instrument		 string = "USDU18"
+	underlying     string = "USD"
 	oracleUrl      string = "https://oracle.gertjaap.org"
 	oracleName     string = "SPOT"
 	datasourceId   uint64 = 2 // xBT/EUR SPOT
-	settlementTime uint64 = 1531785600 // 17500 a76c8b4f6fe5770afffb0ad51adf0702d3b666ceee118eca6fbf27e0da9e6024
+	settlementTime int = 1531785600 // 17500 a76c8b4f6fe5770afffb0ad51adf0702d3b666ceee118eca6fbf27e0da9e6024
 	coinType       uint32 = 1
 	margin         int    = 2
 )
@@ -25,6 +27,10 @@ type Trader struct {
 
 type Rpoint struct {
 	R string `json:"R"`
+}
+
+type Pubkey struct {
+	A string `json:"A"`
 }
 
 type OracleSignature struct {
@@ -140,7 +146,7 @@ func (t *Trader) sendContract(ourFunding, theirFunding, valueFullyOurs, valueFul
 	handleError(err)
 
 	// Set the settlement time
-	err = t.Lit.SetContractSettlementTime(contract.Idx, settlementTime)
+	err = t.Lit.SetContractSettlementTime(contract.Idx, uint64(settlementTime))
 	handleError(err)
 
 	// Set the coin type of the contract
@@ -325,6 +331,25 @@ func (m *Trader) GetAsks() (asks []orderbook.Order) {
 	return asks
 }
 
+func (m *Trader) GetOraclePubKey() (string) {
+	var pubkey Pubkey
+
+	req, err := http.NewRequest("GET", "https://oracle.gertjaap.org/api/pubkey", nil)
+	handleError(err)
+
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
+	handleError(err)
+
+	defer resp.Body.Close()
+
+	err = json.NewDecoder(resp.Body).Decode(&pubkey)
+	handleError(err)
+
+	return pubkey.A
+}
+
 func GetR(timestamp int) string {
 	var r Rpoint
 
@@ -347,7 +372,7 @@ func GetR(timestamp int) string {
 func GetOracleSignature() (oracleValue int64, oracleSignature []byte) {
 	var sig OracleSignature
 
-	req, err := http.NewRequest("GET", fmt.Sprintf("https://oracle.gertjaap.org/api/publication/%s", GetR(int(settlementTime))), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("https://oracle.gertjaap.org/api/publication/%s", GetR(settlementTime)), nil)
 	handleError(err)
 
 	client := &http.Client{}
@@ -377,4 +402,22 @@ func (t *Trader) SettleExpired() {
 			fmt.Printf("Settle contract [%v] at %v satoshis\n", c.Idx, v)
 		}
 	}
+}
+
+func (t *Trader) GetInstrument() (string) {
+	return instrument
+}
+
+func (t *Trader) GetUnderlying() (string) {
+	return underlying
+}
+
+func (t *Trader) GetCurrentSpot() (int) {
+	//TODO
+	// https://oracle.gertjaap.org/api/datasources
+	return 14100
+}
+
+func (t *Trader) GetSettlementTime() (int) {
+	return settlementTime
 }
