@@ -1,7 +1,3 @@
-// TODO: dlc.db change to different database tech
-
-
-
 package trader
 
 import (
