@@ -1,7 +1,7 @@
 package main
 
 import (
-	trader "github.com/mit-dci/lit-rpc-client-go-samples/exchange/trader"
+	trader "github.com/mit-dci/lit-rpc-client-go-samples/dlcexchange/trader"
 )
 
 const (

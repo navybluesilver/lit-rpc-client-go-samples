@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	trader "github.com/mit-dci/lit-rpc-client-go-samples/exchange/trader"
+	trader "github.com/mit-dci/lit-rpc-client-go-samples/dlcexchange/trader"
 	"math/rand"
 	"time"
 )

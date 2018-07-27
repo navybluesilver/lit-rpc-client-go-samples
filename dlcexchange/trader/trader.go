@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/mit-dci/lit-rpc-client-go"
-	orderbook "github.com/mit-dci/lit-rpc-client-go-samples/exchange/orderbook"
+	orderbook "github.com/mit-dci/lit-rpc-client-go-samples/dlcexchange/orderbook"
 	"net/http"
 	"time"
 )
