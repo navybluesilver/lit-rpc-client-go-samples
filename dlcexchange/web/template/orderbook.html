@@ -10,8 +10,25 @@
 <body>
 <main>
 <div class="container">
+  <hr>
+  <table id = "balance" class="table">
+    <h2>Balance</h2>
+    <tr>
+      <th>Satoshis</th>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>{{ .Instrument }}</th>
+      <td>0</td>
+    </tr>
+  </table>
+  <hr>
   <table id = "instrument" class="table">
-    <h1>{{ .Instrument }}</h1>
+    <h2>Instrument Details</h2>
+    <tr>
+      <th>Name</th>
+      <td>{{ .Instrument }}</td>
+    </tr>
     <tr>
       <th>Underlying</th>
       <td>{{ .Underlying }}</td>
@@ -21,10 +38,11 @@
       <td>{{ .SettlementDate }}</td>
     </tr>
     <tr>
-      <th>SPOT Price</th>
+      <th>SPOT</th>
       <td>{{ .SPOT }}</td>
-    </tr>
+    </tr>    
   </table>
+  <hr>
   <table id = "technical" class="table">
     <h2>Technical Details</h2>
     <tr>
@@ -40,6 +58,7 @@
       <td>{{ .Rpoint }}</td>
     </tr>
   </table>
+  <hr>
 </div>
 <div class="container">
 <table id = "asks" class="table">
@@ -55,6 +74,12 @@
   </tr>
   {{- end}}
 </table>
+<form action="/buy" method="post">
+    Price: <input type="text" name="price" value="15001">
+    Quantity: <input type="text" name="quantity" value="1">
+    <input type="submit" value="Buy">
+</form>
+<hr>
 <table id = "bids" class="table">
   <h2>Bids</h2>
   <tr>
@@ -68,6 +93,12 @@
   </tr>
   {{- end}}
 </table>
+<form action="/sell" method="post">
+    Price: <input type="text" name="price" value="15001">
+    Quantity: <input type="text" name="quantity" value="1">
+    <input type="submit" value="Sell">
+</form>
+<hr>
 </div>
 </main>
 </body>

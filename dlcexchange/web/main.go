@@ -32,8 +32,8 @@ var (
 type OrderbookPage struct {
 	Instrument string
 	Underlying string
-	MarketMakerLNAddress string
 	MarketMaker string
+	MarketMakerLNAddress string
 	Oracle string
 	Rpoint string
 	SPOT int
@@ -44,7 +44,9 @@ type OrderbookPage struct {
 
 func main() {
 	//orderbook
-	http.HandleFunc("/orderbook", orderbookHandler)
+	http.HandleFunc("/", orderbookHandler)
+	http.HandleFunc("/buy", buyHandler)
+	http.HandleFunc("/sell", sellHandler)
 
 	//files
 	http.Handle("/template/", http.StripPrefix("/template/", http.FileServer(http.Dir("template"))))
@@ -72,14 +74,15 @@ func redirect(w http.ResponseWriter, req *http.Request) {
 	}
 	log.Printf("redirect to: %s", target)
 	http.Redirect(w, req, target,
-		// see @andreiavrammsd comment: often 307 > 301
-		http.StatusTemporaryRedirect)
+	http.StatusTemporaryRedirect)
 }
 
 //orderbook
 func orderbookHandler(w http.ResponseWriter, r *http.Request) {
-	m, err := trader.NewTrader("Market Maker", mHost, mPort, nil)
 	var o OrderbookPage
+
+	m, err := trader.NewTrader("Market Maker", mHost, mPort, nil)
+
 	o.Instrument = m.GetInstrument()
 	o.Underlying = m.GetUnderlying()
 	o.MarketMaker = m.Name
@@ -96,6 +99,20 @@ func orderbookHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+}
+
+func sellHandler(w http.ResponseWriter, r *http.Request) {
+		r.ParseForm()
+		fmt.Println("SELL")
+ 		fmt.Printf("%+v\n", r.Form)
+		orderbookHandler(w, r)
+}
+
+func buyHandler(w http.ResponseWriter, r *http.Request) {
+		r.ParseForm()
+		fmt.Println("BUY")
+ 		fmt.Printf("%+v\n", r.Form)
+		orderbookHandler(w, r)
 }
 
 //formatting
