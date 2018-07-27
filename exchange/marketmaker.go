@@ -20,5 +20,6 @@ func handleError(err error) {
 func main() {
 	m, err := trader.NewTrader("Market Maker", mHost, mPort, nil)
 	handleError(err)
+	m.SettleExpired()
 	m.MakeMarket(mListenPort)
 }

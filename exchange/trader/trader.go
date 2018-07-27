@@ -1,3 +1,7 @@
+// TODO: dlc.db change to different database tech
+
+
+
 package trader
 
 import (
@@ -13,7 +17,7 @@ const (
 	oracleUrl      string = "https://oracle.gertjaap.org"
 	oracleName     string = "SPOT"
 	datasourceId   uint64 = 2 // xBT/EUR SPOT
-	settlementTime uint64 = 1531296000
+	settlementTime uint64 = 1531785600 // 17500 a76c8b4f6fe5770afffb0ad51adf0702d3b666ceee118eca6fbf27e0da9e6024
 	coinType       uint32 = 1
 	margin         int    = 2
 )
@@ -172,7 +176,6 @@ func (t *Trader) sendContract(ourFunding, theirFunding, valueFullyOurs, valueFul
 
 // Converts a lit contract into an ask or bid order
 func (t *Trader) convertContractToOrder(contractIdx uint64) (o orderbook.Order, err error) {
-
 	// Get the contract from lit and copy the peerIdx and ContractIdx to the order
 	c, err := t.Lit.GetContract(contractIdx)
 	handleError(err)
@@ -264,17 +267,11 @@ func (t *Trader) getAllOrders() (orders []orderbook.Order, err error) {
 			o, err := t.convertContractToOrder(c.Idx)
 			if err != nil {
 				//TODO: If the contract is not a valid order, decline it
-				t.Lit.DeclineContract(c.Idx)
+				t.Lit.ContractRespond(c.Idx, false)
 				fmt.Printf("Declined contract [%v]: %v\n", c.Idx, err)
 			} else {
 				orders = append(orders, o)
 			}
-		}
-		// contracts active, past settlement date
-		if c.Status == 6 && int(c.OracleTimestamp) < int(time.Now().Unix()) {
-			v, s := GetOracleSignature()
-			t.Lit.SettleContract(c.Idx, v, s)
-			fmt.Printf("Settle contract [%v] at %v satoshis\n", c.Idx, v)
 		}
 	}
 	return orders, nil
@@ -303,11 +300,13 @@ func (m *Trader) MakeMarket(port uint32) error {
 		} else {
 			// TODO: handle not enough satoshis to accept contract
 			for _, i := range c {
-				err := m.Lit.AcceptContract(uint64(i))
+				err := m.Lit.ContractRespond(uint64(i), true)
 				handleError(err)
 				fmt.Printf("[%s]- Accepted contract [%v]\n", time.Now().Format("20060102150405"), i)
 			}
 		}
+
+		m.SettleExpired()
 	}
 	return nil
 }
@@ -366,4 +365,20 @@ func GetOracleSignature() (oracleValue int64, oracleSignature []byte) {
 	handleError(err)
 
 	return int64(sig.Value), []byte(sig.Signature)
+}
+
+// Settle all the contracts that are past the settlement date
+func (t *Trader) SettleExpired() {
+	//Get all Contracts
+	allContracts, err := t.Lit.ListContracts()
+	handleError(err)
+
+	for _, c := range allContracts {
+		// contracts active, past settlement date
+		if c.Status == 6 && int(c.OracleTimestamp) < int(time.Now().Unix()) {
+			v, s := GetOracleSignature()
+			t.Lit.SettleContract(c.Idx, v, s)
+			fmt.Printf("Settle contract [%v] at %v satoshis\n", c.Idx, v)
+		}
+	}
 }

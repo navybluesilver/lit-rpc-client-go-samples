@@ -35,12 +35,14 @@ func tradingSimulation() {
 	connect(bob, m)
 
 	//Alice offers to buy
-	err = alice.Buy(randInt(18400, 19000), 1)
+	err = alice.Buy(randInt(17100, 18000), 1)
 	handleError(err)
+	alice.SettleExpired()
 
 	//Bob offers to sell
-	err = bob.Sell(randInt(17400, 18300), 1)
+	err = bob.Sell(randInt(16000, 16900), 1)
 	handleError(err)
+	bob.SettleExpired()
 }
 
 // Connect to the market maker
