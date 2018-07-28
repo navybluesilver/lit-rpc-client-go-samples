@@ -28,6 +28,7 @@ var (
 		"formatAsSatoshi": formatAsSatoshi,
 	}
 )
+var m *trader.Trader
 
 type OrderbookPage struct {
 	Instrument string
@@ -43,6 +44,8 @@ type OrderbookPage struct {
 }
 
 func main() {
+	m, _ = trader.NewTrader("Market Maker", mHost, mPort, nil)
+
 	//orderbook
 	http.HandleFunc("/", orderbookHandler)
 	http.HandleFunc("/buy", buyHandler)
@@ -80,9 +83,6 @@ func redirect(w http.ResponseWriter, req *http.Request) {
 //orderbook
 func orderbookHandler(w http.ResponseWriter, r *http.Request) {
 	var o OrderbookPage
-
-	m, err := trader.NewTrader("Market Maker", mHost, mPort, nil)
-
 	o.Instrument = m.GetInstrument()
 	o.Underlying = m.GetUnderlying()
 	o.MarketMaker = m.Name
@@ -95,7 +95,7 @@ func orderbookHandler(w http.ResponseWriter, r *http.Request) {
 	o.SettlementDate = fmt.Sprintf("%v",time.Unix(int64(m.GetSettlementTime()), 0))
 
 	t := template.Must(template.New("orderbook.html").Funcs(fmap).ParseFiles("template/orderbook.html"))
-	err = t.ExecuteTemplate(w, "orderbook.html", o)
+	err := t.ExecuteTemplate(w, "orderbook.html", o)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
