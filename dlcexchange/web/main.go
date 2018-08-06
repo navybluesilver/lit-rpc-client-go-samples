@@ -13,11 +13,13 @@ import (
 )
 
 const (
-	port        string = ":80"
 	coinType    uint32 = 1
-	mHost       string = "127.0.0.1"
+	mHost       string = "localhost"
 	mPort       int32  = 8001
 	mListenPort uint32 = 2448
+	tHost       string = "localhost"
+	tPort       int32  = 8002
+	tListenPort uint32 = 2449
 )
 
 var (
@@ -27,8 +29,10 @@ var (
 	fmap             = template.FuncMap{
 		"formatAsSatoshi": formatAsSatoshi,
 	}
+	port             = config.GetString("web.port")
 )
 var m *trader.Trader
+var t *trader.Trader
 
 type OrderbookPage struct {
 	Instrument string
@@ -45,6 +49,8 @@ type OrderbookPage struct {
 
 func main() {
 	m, _ = trader.NewTrader("Market Maker", mHost, mPort, nil)
+	t, _ = trader.NewTrader("Current User", tHost, tPort, m)
+	connect(t, m)
 
 	//orderbook
 	http.HandleFunc("/", orderbookHandler)
@@ -64,6 +70,7 @@ func main() {
 func connect(t *trader.Trader, m *trader.Trader) {
 	mLNAddr, err := m.Lit.GetLNAddress()
 	handleError(err)
+	fmt.Printf("[%s]- Connecting %s to %s [%s@%s:%d]\n", time.Now().Format("20060102150405"), t.Name, m.Name, mLNAddr, mHost, mListenPort)
 	err = t.Lit.Connect(mLNAddr, mHost, mListenPort)
 	handleError(err)
 }

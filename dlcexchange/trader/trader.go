@@ -340,8 +340,8 @@ func (m *Trader) GetAsks() (asks []orderbook.Order) {
 
 func (m *Trader) GetOraclePubKey() (string) {
 	var pubkey Pubkey
-
-	req, err := http.NewRequest("GET", "https://oracle.gertjaap.org/api/pubkey", nil)
+	url := fmt.Sprintf("%s/api/pubkey", oracleUrl)
+	req, err := http.NewRequest("GET", url, nil)
 	handleError(err)
 
 	client := &http.Client{}
@@ -359,8 +359,8 @@ func (m *Trader) GetOraclePubKey() (string) {
 
 func GetR(timestamp int) string {
 	var r Rpoint
-
-	req, err := http.NewRequest("GET", fmt.Sprintf("https://oracle.gertjaap.org/api/rpoint/2/%d", timestamp), nil)
+	url := fmt.Sprintf("%s/api/rpoint/2/%d", oracleUrl, timestamp)
+	req, err := http.NewRequest("GET", url , nil)
 	handleError(err)
 
 	client := &http.Client{}
@@ -378,8 +378,9 @@ func GetR(timestamp int) string {
 
 func GetOracleSignature() (oracleValue int64, oracleSignature []byte) {
 	var sig OracleSignature
+	url := fmt.Sprintf("%s/api/publication/%s", oracleUrl, GetR(settlementTime))
 
-	req, err := http.NewRequest("GET", fmt.Sprintf("https://oracle.gertjaap.org/api/publication/%s", GetR(settlementTime)), nil)
+	req, err := http.NewRequest("GET", url, nil)
 	handleError(err)
 
 	client := &http.Client{}
@@ -419,10 +420,37 @@ func (t *Trader) GetUnderlying() (string) {
 	return underlying
 }
 
+type OracleDatasources []struct {
+	Name         string `json:"name"`
+	Description  string `json:"description"`
+	ID           int    `json:"id"`
+	CurrentValue int    `json:"currentValue"`
+}
+
 func (t *Trader) GetCurrentSpot() (int) {
-	//TODO
-	// https://oracle.gertjaap.org/api/datasources
-	return 14100
+	var datasources OracleDatasources
+	url := fmt.Sprintf("%s/api/datasources", oracleUrl)
+
+	req, err := http.NewRequest("GET", url, nil)
+	handleError(err)
+
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
+	handleError(err)
+
+	defer resp.Body.Close()
+
+	err = json.NewDecoder(resp.Body).Decode(&datasources)
+	handleError(err)
+
+	for _, datasource := range datasources {
+    if datasource.ID == datasourceId {
+			return datasource.CurrentValue
+		}
+	}
+
+	return 0
 }
 
 func (t *Trader) GetSettlementTime() (int) {
