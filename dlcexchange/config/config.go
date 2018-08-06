@@ -6,11 +6,22 @@ import (
 )
 
 func GetString(config string) (s string) {
-	viper.SetConfigName("config") // name of config file (without extension)
-	viper.AddConfigPath("/home/navybluesilver/.navybluesilver")
+	viper.SetConfigName("dlcexchange") // name of config file (without extension)
+	viper.AddConfigPath("/home/user/dlcexchange/alice")
 	err := viper.ReadInConfig()
 	if err != nil {
 		panic(fmt.Errorf("Fatal error config file: %s \n", err))
 	}
 	return viper.GetString(config)
+}
+
+
+func GetInt(config string) (i int) {
+	viper.SetConfigName("dlcexchange") // name of config file (without extension)
+	viper.AddConfigPath("/home/user/dlcexchange/alice")
+	err := viper.ReadInConfig()
+	if err != nil {
+		panic(fmt.Errorf("Fatal error config file: %s \n", err))
+	}
+	return viper.GetInt(config)
 }

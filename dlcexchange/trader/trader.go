@@ -5,19 +5,26 @@ import (
 	"fmt"
 	"github.com/mit-dci/lit-rpc-client-go"
 	orderbook "github.com/mit-dci/lit-rpc-client-go-samples/dlcexchange/orderbook"
+	config "github.com/mit-dci/lit-rpc-client-go-samples/dlcexchange/config"
 	"net/http"
 	"time"
 )
 
-const (
-	instrument		 string = "USDU18"
-	underlying     string = "USD"
-	oracleUrl      string = "https://oracle.gertjaap.org"
-	oracleName     string = "SPOT"
-	datasourceId   uint64 = 2 // xBT/EUR SPOT
-	settlementTime int = 1531785600 // 17500 a76c8b4f6fe5770afffb0ad51adf0702d3b666ceee118eca6fbf27e0da9e6024
-	coinType       uint32 = 1
-	margin         int    = 2
+/*
+		Working Directory: <input type="text" name="working_directory" value="/home/user/dlcexchange/alice">
+		Settlement Date: <input type="text" name="settlement_date" value="2018-12-28">
+		Default Counterparty: <input type="text" name="default_counterparty" value="ln12zazlguj5zwwgeul9judduqcy3pkzgl7pg55zs">
+*/
+
+var (
+	instrument		 string = config.GetString("instrument.name")
+	underlying     string = config.GetString("instrument.underlying")
+	oracleUrl      string = config.GetString("oracle.url")
+	oracleName     string = config.GetString("oracle.name")
+	datasourceId   int    = config.GetInt("oracle.datasource_id")
+	settlementTime int    = config.GetInt("instrument.settlement_time") // 17500 a76c8b4f6fe5770afffb0ad51adf0702d3b666ceee118eca6fbf27e0da9e6024
+	coinType       int    = config.GetInt("trader.coin_type")
+	margin         int    = config.GetInt("instrument.margin")
 )
 
 type Trader struct {
@@ -150,11 +157,11 @@ func (t *Trader) sendContract(ourFunding, theirFunding, valueFullyOurs, valueFul
 	handleError(err)
 
 	// Set the coin type of the contract
-	err = t.Lit.SetContractCoinType(contract.Idx, coinType)
+	err = t.Lit.SetContractCoinType(contract.Idx, uint32(coinType))
 	handleError(err)
 
 	// Configure the contract datafeed
-	err = t.Lit.SetContractDatafeed(contract.Idx, datasourceId)
+	err = t.Lit.SetContractDatafeed(contract.Idx, uint64(datasourceId))
 	handleError(err)
 
 	// Set the contract funding to 1 BTC each
