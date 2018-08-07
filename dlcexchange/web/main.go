@@ -23,8 +23,8 @@ const (
 	mPort 			uint32 = 2448
 	tName  			string = "Alice"
 	tHost       string = "localhost"
-	tPort       int32  = 8002
-	tListenPort uint32 = 2449
+	tPort       int32  = 8001
+	tListenPort uint32 = 2448
 )
 
 var (
