@@ -27,6 +27,7 @@ const (
 	tListenPort uint32 = 2448
 )
 
+
 var (
 	templates        = template.Must(template.ParseFiles("template/orderbook.html"))
 	certFile         = config.GetString("web.certFile")
@@ -71,7 +72,7 @@ func main() {
 	//listen
 	// redirect every http request to https
 	go http.ListenAndServe(port, http.HandlerFunc(redirect))
-	log.Fatal(http.ListenAndServeTLS(port, certFile, keyFile, nil))
+	log.Fatal(http.ListenAndServe(port, nil))
 }
 
 // Connect to the market maker
