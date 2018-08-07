@@ -18,7 +18,6 @@ const (
 	coinType    uint32 = 1
 	mName 			string = "navybluesilver.net"
 	mURL        string = "navybluesilver.net"
-	mLNAddress  string = "ln1cgy9632gya8tqfscs7p9grnq0gvu8rwkvd9v0n"
 	mHost       string = "128.199.173.181"
 	mPort 			uint32 = 2448
 	tName  			string = "Alice"
@@ -36,6 +35,7 @@ var (
 		"formatAsSatoshi": formatAsSatoshi,
 	}
 	port             = config.GetString("web.port")
+	mLNAddress  string = config.GetString("counterparty.LNAddress")
 
 )
 var c *counterparty.Counterparty
