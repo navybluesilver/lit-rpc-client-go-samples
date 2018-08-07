@@ -6,17 +6,22 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"strconv"
 	"time"
 	config "github.com/mit-dci/lit-rpc-client-go-samples/dlcexchange/config"
 	trader "github.com/mit-dci/lit-rpc-client-go-samples/dlcexchange/trader"
+	counterparty "github.com/mit-dci/lit-rpc-client-go-samples/dlcexchange/counterparty"
 
 )
 
 const (
 	coinType    uint32 = 1
-	mHost       string = "localhost"
-	mPort       int32  = 8001
-	mListenPort uint32 = 2448
+	mName 			string = "navybluesilver.net"
+	mURL        string = "navybluesilver.net"
+	mLNAddress  string = "ln1cgy9632gya8tqfscs7p9grnq0gvu8rwkvd9v0n"
+	mHost       string = "128.199.173.181"
+	mPort 			uint32 = 2448
+	tName  			string = "Alice"
 	tHost       string = "localhost"
 	tPort       int32  = 8002
 	tListenPort uint32 = 2449
@@ -30,15 +35,17 @@ var (
 		"formatAsSatoshi": formatAsSatoshi,
 	}
 	port             = config.GetString("web.port")
+
 )
-var m *trader.Trader
+var c *counterparty.Counterparty
 var t *trader.Trader
 
 type OrderbookPage struct {
 	Instrument string
 	Underlying string
-	MarketMaker string
-	MarketMakerLNAddress string
+	TraderName string
+	CounterpartyName string
+	CounterpartyLNAddress string
 	Oracle string
 	Rpoint string
 	SPOT int
@@ -48,9 +55,10 @@ type OrderbookPage struct {
 }
 
 func main() {
-	m, _ = trader.NewTrader("Market Maker", mHost, mPort, nil)
-	t, _ = trader.NewTrader("Current User", tHost, tPort, m)
-	connect(t, m)
+	c = &counterparty.Counterparty{Name: mName, LNAddress: mLNAddress, IP: mHost, Port: mPort, URL: mURL }
+
+	t, _ = trader.NewTrader(tName, tHost, tPort)
+	connect(t)
 
 	//orderbook
 	http.HandleFunc("/", orderbookHandler)
@@ -67,11 +75,9 @@ func main() {
 }
 
 // Connect to the market maker
-func connect(t *trader.Trader, m *trader.Trader) {
-	mLNAddr, err := m.Lit.GetLNAddress()
-	handleError(err)
-	fmt.Printf("[%s]- Connecting %s to %s [%s@%s:%d]\n", time.Now().Format("20060102150405"), t.Name, m.Name, mLNAddr, mHost, mListenPort)
-	err = t.Lit.Connect(mLNAddr, mHost, mListenPort)
+func connect(t *trader.Trader) {
+	fmt.Printf("[%s]- Connecting %s to %s [%s@%s:%d]\n", time.Now().Format("20060102150405"), t.Name, c.Name, c.LNAddress,  c.IP,  c.Port)
+	err := t.Lit.Connect( c.LNAddress,  c.IP,  c.Port)
 	handleError(err)
 }
 
@@ -90,16 +96,17 @@ func redirect(w http.ResponseWriter, req *http.Request) {
 //orderbook
 func orderbookHandler(w http.ResponseWriter, r *http.Request) {
 	var o OrderbookPage
-	o.Instrument = m.GetInstrument()
-	o.Underlying = m.GetUnderlying()
-	o.MarketMaker = m.Name
-	o.Oracle = m.GetOraclePubKey()
-	o.Rpoint = trader.GetR(m.GetSettlementTime())
-  o.MarketMakerLNAddress, _ = m.Lit.GetLNAddress()
-	o.Bids = m.GetBids()
-	o.Asks = m.GetAsks()
-	o.SPOT = m.GetCurrentSpot()
-	o.SettlementDate = fmt.Sprintf("%v",time.Unix(int64(m.GetSettlementTime()), 0))
+	o.Instrument = t.GetInstrument()
+	o.Underlying = t.GetUnderlying()
+	o.TraderName = t.Name
+	o.Oracle = t.GetOraclePubKey()
+	o.Rpoint = trader.GetR(trader.GetSettlementTime())
+  o.CounterpartyLNAddress = c.LNAddress
+	o.CounterpartyName = c.Name
+	o.Bids = t.GetBids()
+	o.Asks = t.GetAsks()
+	o.SPOT = t.GetCurrentSpot()
+	o.SettlementDate = fmt.Sprintf("%v",time.Unix(int64(trader.GetSettlementTime()), 0))
 
 	t := template.Must(template.New("orderbook.html").Funcs(fmap).ParseFiles("template/orderbook.html"))
 	err := t.ExecuteTemplate(w, "orderbook.html", o)
@@ -110,15 +117,17 @@ func orderbookHandler(w http.ResponseWriter, r *http.Request) {
 
 func sellHandler(w http.ResponseWriter, r *http.Request) {
 		r.ParseForm()
-		fmt.Println("SELL")
- 		fmt.Printf("%+v\n", r.Form)
+		price, _ := strconv.Atoi(fmt.Sprintf("%s", r.Form["price"][0]))
+		quantity, _ := strconv.Atoi(fmt.Sprintf("%s", r.Form["quantity"][0]))
+		t.Sell(price, quantity)
 		orderbookHandler(w, r)
 }
 
 func buyHandler(w http.ResponseWriter, r *http.Request) {
 		r.ParseForm()
-		fmt.Println("BUY")
- 		fmt.Printf("%+v\n", r.Form)
+		price, _ := strconv.Atoi(fmt.Sprintf("%s", r.Form["price"][0]))
+		quantity, _ := strconv.Atoi(fmt.Sprintf("%s", r.Form["quantity"][0]))
+		t.Buy(price, quantity)
 		orderbookHandler(w, r)
 }
 

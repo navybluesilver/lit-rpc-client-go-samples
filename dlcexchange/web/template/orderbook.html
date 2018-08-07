@@ -1,6 +1,6 @@
 <html>
 <head>
-    <title>{{ .MarketMaker }}</title>
+    <title>{{ .TraderName }} - {{ .Instrument }} </title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
@@ -10,30 +10,16 @@
 <body>
 <main>
 <div class="container">
-  <hr>
-  <table id = "balance" class="table">
-    <h2>Balance</h2>
+  <table id = "trader" class="table">
+    <h2>Trader</h2>
     <tr>
-      <th>Satoshis</th>
-      <td>0</td>
+      <th>Name</th>
+      <td>{{ .TraderName }}</td>
     </tr>
-    <tr>
-      <th>{{ .Instrument }}</th>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>{{ .Instrument }} asks </th>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>{{ .Instrument }} bids </th>
-      <td>0</td>
-    </tr>
-
   </table>
   <hr>
   <table id = "instrument" class="table">
-    <h2>Instrument Details</h2>
+    <h2>Instrument</h2>
     <tr>
       <th>Name</th>
       <td>{{ .Instrument }}</td>
@@ -51,13 +37,54 @@
       <td>{{ .SPOT }}</td>
     </tr>
   </table>
-  <hr>
-  <table id = "technical" class="table">
-    <h2>Technical Details</h2>
+  <hr>  
+  <table id = "cash" class="table">
+    <h2>Cash</h2>
     <tr>
-      <th>Counterparty</th>
-      <td>{{ .MarketMakerLNAddress }}</td>
+      <th>Satoshis</th>
+      <td>0</td>
     </tr>
+  </table>
+  <table id = "positions" class="table">
+    <h2>Positions</h2>
+    <tr>
+      <th>Instrument</th>
+      <th>Size</th>
+      <th>Price</th>
+      <th>Mark Price</th>
+      <th>Unrealised P&L</th>
+    </tr>
+    <tr>
+      <th>{{ .Instrument }} </th>
+      <td>-1</td>
+      <td>457410</td>
+      <td>{{ .SPOT }}</td>
+      <td>45455</td>
+    </tr>
+    <tr>
+      <th>{{ .Instrument }} </th>
+      <td>1</td>
+      <td>500000</td>
+      <td>{{ .SPOT }}</td>
+      <td>10000</td>
+    </tr>
+  </table>
+
+  <hr>
+  <table id = "counterparty" class="table">
+    <h2>Counterparty</h2>
+    <tr>
+      <th>Name</th>
+      <td>{{ .CounterpartyName }}</td>
+    </tr>
+    <tr>
+      <th>LNAddress</th>
+      <td>{{ .CounterpartyLNAddress }}</td>
+    </tr>
+  </table>
+  <hr>
+  <table id = "oracle" class="table">
+    <h2>Oracle</h2>
     <tr>
       <th>Oracle Public Key</th>
       <td>{{ .Oracle }}</td>
@@ -67,6 +94,7 @@
       <td>{{ .Rpoint }}</td>
     </tr>
   </table>
+
   <hr>
 </div>
 <div class="container">
