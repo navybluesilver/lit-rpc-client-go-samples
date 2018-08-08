@@ -34,7 +34,7 @@ func NewTrader(name string, host string, port int32) (*Trader, error) {
 }
 
 // Get the balance for a coinType and an address to allow deposits
-func (t *Trader) GetBalance(coinType uint32) {
+func (t *Trader) GetBalance(coinType uint32) (int) {
 	addr, err := t.Lit.GetAddresses(coinType, 0, false)
 	handleError(err)
 
@@ -44,8 +44,10 @@ func (t *Trader) GetBalance(coinType uint32) {
 	for _, b := range allBal {
 		if b.CoinType == coinType {
 			fmt.Printf("[%s]- Trader: %s | CoinType: %d | SyncHeight: %d | Utxos: %d | WitConf: %d| Channel: %d | Address: %s\n", time.Now().Format("20060102150405"), t.Name, b.CoinType, b.SyncHeight, b.TxoTotal, b.MatureWitty, b.ChanTotal, addr)
+			return int(b.MatureWitty)
 		}
 	}
+	return 0
 }
 
 // Accept profitable trades

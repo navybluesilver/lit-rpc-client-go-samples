@@ -59,7 +59,7 @@ func (t *Trader) getMarketMakerIdx() (uint32, error) {
 
 // Converts a lit contract into an ask or bid order
 func (t *Trader) convertContractToOrder(contractIdx uint64) (o orderbook.Order, err error) {
-	margin :=  GetMargin() 
+	margin :=  GetMargin()
 	// Get the contract from lit and copy the peerIdx and ContractIdx to the order
 	c, err := t.Lit.GetContract(contractIdx)
 	handleError(err)
@@ -198,9 +198,11 @@ func (t *Trader) sendContract(ourFunding, theirFunding, valueFullyOurs, valueFul
 	handleError(err)
 
 	// Offer the contract to the market maker
+	/*
 	peerIdx, err := t.getMarketMakerIdx()
 	err = t.Lit.OfferContract(contract.Idx, peerIdx)
 	handleError(err)
+	*/
 	fmt.Printf("[%s]- %s offers contract: ourFunding [%d] | theirFunding [%d] | valueFullyOurs [%d] | valueFullyTheirs [%d]\n", time.Now().Format("20060102150405"), t.Name, ourFunding, theirFunding, valueFullyOurs, valueFullyTheirs)
 
 	return nil

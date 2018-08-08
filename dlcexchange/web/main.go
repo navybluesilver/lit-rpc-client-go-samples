@@ -51,6 +51,7 @@ type OrderbookPage struct {
 	Rpoint string
 	SPOT int
 	SettlementDate string
+	Cash int
 	Bids interface{}
 	Asks interface{}
 }
@@ -108,6 +109,7 @@ func orderbookHandler(w http.ResponseWriter, r *http.Request) {
 	o.Asks = t.GetAsks()
 	o.SPOT = t.GetCurrentSpot()
 	o.SettlementDate = fmt.Sprintf("%v",time.Unix(int64(trader.GetSettlementTime()), 0))
+	o.Cash = t.GetBalance(coinType)
 
 	t := template.Must(template.New("orderbook.html").Funcs(fmap).ParseFiles("template/orderbook.html"))
 	err := t.ExecuteTemplate(w, "orderbook.html", o)
