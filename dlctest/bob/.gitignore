@@ -10,6 +10,7 @@ ln.db
 testkey.hex
 privkey.hex
 utxo.db
+lit.log
 dlc.db
 watch.db
 setup.sh
