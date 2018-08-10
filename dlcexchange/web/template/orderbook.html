@@ -9,6 +9,7 @@
 
 <body>
 <main>
+<br>
 <div class="container">
   <table id = "trader" class="table">
     <h2>Trader</h2>
@@ -48,28 +49,30 @@
   <table id = "positions" class="table">
     <h2>Positions</h2>
     <tr>
-      <th>Instrument</th>
       <th>Size</th>
       <th>Price</th>
-      <th>Mark Price</th>
-      <th>Unrealised P&L</th>
     </tr>
+    {{- range .Positions }}
     <tr>
-      <th>{{ .Instrument }} </th>
-      <td>-1</td>
-      <td>457410</td>
-      <td>{{ .SPOT }}</td>
-      <td>45455</td>
+    <td>{{ .Quantity }}</td>
+    <td>{{ .Price }}</td>
     </tr>
-    <tr>
-      <th>{{ .Instrument }} </th>
-      <td>1</td>
-      <td>500000</td>
-      <td>{{ .SPOT }}</td>
-      <td>10000</td>
-    </tr>
+    {{- end}}
   </table>
-
+  <hr>
+  <table id = "orders" class="table">
+    <h2>Orders</h2>
+    <tr>
+      <th>Size</th>
+      <th>Price</th>
+    </tr>
+    {{- range .Orders }}
+    <tr>
+    <td>{{ .Quantity }}</td>
+    <td>{{ .Price }}</td>
+    </tr>
+    {{- end}}
+  </table>
   <hr>
   <table id = "counterparty" class="table">
     <h2>Counterparty</h2>
@@ -98,25 +101,22 @@
   <hr>
 </div>
 <div class="container">
-<table id = "asks" class="table">
-  <h2>Asks</h2>
-  <tr>
-    <th>Price</th>
-    <th>Quantity</th>
-  </tr>
-  {{- range .Asks }}
-  <tr>
-  <td>{{ .Price }}</td>
-  <td>{{ .Quantity }}</td>
-  </tr>
-  {{- end}}
-</table>
+<h2>Buy</h2>
 <form action="/buy" method="post">
     Price: <input type="text" name="price" value="15001">
     Quantity: <input type="text" name="quantity" value="1">
     <input type="submit" value="Buy">
 </form>
 <hr>
+<h2>Sell</h2>
+<form action="/sell" method="post">
+    Price: <input type="text" name="price" value="15001">
+    Quantity: <input type="text" name="quantity" value="1">
+    <input type="submit" value="Sell">
+</form>
+<hr>
+</div>
+<div class="container">
 <table id = "bids" class="table">
   <h2>Bids</h2>
   <tr>
@@ -130,12 +130,19 @@
   </tr>
   {{- end}}
 </table>
-<form action="/sell" method="post">
-    Price: <input type="text" name="price" value="15001">
-    Quantity: <input type="text" name="quantity" value="1">
-    <input type="submit" value="Sell">
-</form>
-<hr>
+<table id = "asks" class="table">
+  <h2>Asks</h2>
+  <tr>
+    <th>Price</th>
+    <th>Quantity</th>
+  </tr>
+  {{- range .Asks }}
+  <tr>
+  <td>{{ .Price }}</td>
+  <td>{{ .Quantity }}</td>
+  </tr>
+  {{- end}}
+</table>
 </div>
 </main>
 </body>

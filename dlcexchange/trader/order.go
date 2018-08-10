@@ -35,7 +35,7 @@ func (t *Trader) Sell(price, quantity int) error {
 
 // Return Bids
 func (m *Trader) GetBids() (bids []orderbook.Order) {
-	allOrders, err := m.getAllOrders()
+	allOrders, err := m.getAsksBids()
 	handleError(err)
 	bids, _, _, _, err = orderbook.GetBidsAsks(allOrders)
 	handleError(err)
@@ -44,7 +44,7 @@ func (m *Trader) GetBids() (bids []orderbook.Order) {
 
 // Return Asks
 func (m *Trader) GetAsks() (asks []orderbook.Order) {
-	allOrders, err := m.getAllOrders()
+	allOrders, err := m.getAsksBids()
 	handleError(err)
 	_, asks, _, _, err = orderbook.GetBidsAsks(allOrders)
 	handleError(err)
@@ -65,6 +65,8 @@ func (t *Trader) convertContractToOrder(contractIdx uint64) (o orderbook.Order, 
 	handleError(err)
 	o.PeerIdx = int(c.PeerIdx)
 	o.ContractIdx = int(c.Idx)
+	o.Status = int(c.Status)
+
 
 	// Make sure that both parties provide funding
 	if c.OurFundingAmount == 0 && c.TheirFundingAmount == 0 {
@@ -136,8 +138,46 @@ func (t *Trader) convertContractToOrder(contractIdx uint64) (o orderbook.Order, 
 	return o, nil
 }
 
+/*
+//Order
+ContractStatusOfferedByMe  DlcContractStatus = 1
+
+//Ask/Bid
+ContractStatusOfferedToMe  DlcContractStatus = 2
+
+//Position
+ContractStatusActive       DlcContractStatus = 6
+
+//Ignored
+ContractStatusDraft        DlcContractStatus = 0
+ContractStatusDeclined     DlcContractStatus = 3
+ContractStatusAccepted     DlcContractStatus = 4
+ContractStatusAcknowledged DlcContractStatus = 5
+ContractStatusSettling     DlcContractStatus = 7
+ContractStatusClosed       DlcContractStatus = 8
+ContractStatusError        DlcContractStatus = 9
+ContractStatusAccepting    DlcContractStatus = 10
+*/
+
+
+//Return all open orders; get all contracts offerd by me
+func (t *Trader) GetOrders() (orders []orderbook.Order, err error) {
+	return t.getOrdersForContracts(1)
+}
+
+//Return all positions; get all active contracts
+func (t *Trader) GetPositions() (orders []orderbook.Order, err error) {
+	return t.getOrdersForContracts(6)
+}
+
+//Return all asks and bids; get all contracts offered to us
+func (t *Trader) getAsksBids() (orders []orderbook.Order, err error) {
+	return t.getOrdersForContracts(2)
+}
+
+
 //Return all buy and sell offers
-func (t *Trader) getAllOrders() (orders []orderbook.Order, err error) {
+func (t *Trader) getOrdersForContracts(status int) (orders []orderbook.Order, err error) {
 	//Get all Contracts
 	allContracts, err := t.Lit.ListContracts()
 	handleError(err)
@@ -147,7 +187,7 @@ func (t *Trader) getAllOrders() (orders []orderbook.Order, err error) {
 	//TODO: should have the ability to completly remove contracts
 	for _, c := range allContracts {
 		// contracts offered to me
-		if c.Status == 2 {
+		if int(c.Status) == status {
 			o, err := t.convertContractToOrder(c.Idx)
 			if err != nil {
 				//TODO: If the contract is not a valid order, decline it
@@ -160,6 +200,7 @@ func (t *Trader) getAllOrders() (orders []orderbook.Order, err error) {
 	}
 	return orders, nil
 }
+
 
 // Create and offer the contract to the market maker
 func (t *Trader) sendContract(ourFunding, theirFunding, valueFullyOurs, valueFullyTheirs int64) error {

@@ -60,7 +60,7 @@ func (m *Trader) MakeMarket(port uint32) error {
 
 	// Endless loop to check if there are any contracts to accept
 	for loop := true; loop; loop = (1 == 1) {
-		allOrders, err := m.getAllOrders()
+		allOrders, err := m.getAsksBids()
 		handleError(err)
 		c, err := orderbook.GetContractsToAccept(allOrders)
 		if err != nil {

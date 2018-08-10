@@ -14,8 +14,7 @@ import (
 var oraclePubKey, rPoint [33]byte
 var oracleSig [32]byte
 var oracleValue int64
-var alice, bob *litrpcclient.LitRpcClient
-var coinType uint32 = 257 //257: regtest | 1:testnet3
+var lit1, lit2 *litrpcclient.LitRpcClient
 
 func handleError(err error) {
 	if err != nil {
@@ -24,25 +23,6 @@ func handleError(err error) {
 }
 
 func main() {
-	/*
-		given:
-		underlying is 15000 satoshis on trade date
-		Alice buys 100 underlying at 15000 satoshis from Bob
-		Bob funds 3000000 satoshis (liquidation price is 45000 [15000+30000])
-
-
-		Case 1:
-		underlying is 15161 satoshis on expiry/settlement date
-		Alice receives 1516100 satoshis, Bob receives 2983900 satoshis
-
-		Case 2:
-		underlying is 14000 satoshis on expiry/settlement date
-		Alice receives 1400000 satoshis, Bob receives 3100000 satoshis
-
-		Case 3:
-		underlying is 46000 satoshis on expiry/settlement date
-		Alice receives 4500000 satoshis, Bob liquidates and has 0 satoshis
-	*/
 	parsedBytes, err := hex.DecodeString("03c0d496ef6656fe102a689abc162ceeae166832d826f8750c94d797c92eedd465")
 	handleError(err)
 	copy(oraclePubKey[:], parsedBytes)
@@ -57,19 +37,10 @@ func main() {
 	handleError(err)
 	copy(oracleSig[:], parsedBytes)
 
-	alice, err = litrpcclient.NewClient("127.0.0.1", 8001)
+	lit1, err = litrpcclient.NewClient("localhost", 8001)
 	handleError(err)
-	bob, err = litrpcclient.NewClient("127.0.0.1", 8002)
+	lit2, err = litrpcclient.NewClient("localhost", 8002)
 	handleError(err)
-
-	// Show addresses that need funds
-	fmt.Println(alice.GetAddresses(coinType,0,false))
-	fmt.Println(bob.GetAddresses(coinType,0,false))
-
-	// Pause
-	fmt.Println("Give 10 BTC to the above addresses on regtest")
-	var input string
-	fmt.Scanln(&input)
 
 	// Connect both LIT peers together
 	fmt.Println("Connecting nodes together...")
@@ -88,13 +59,11 @@ func main() {
 
 	// Offer the contract to the other peer
 	fmt.Println("Offering the contract to the other peer...")
-	err = alice.OfferContract(contract.Idx, 1)
-	handleError(err)
+	lit1.OfferContract(contract.Idx, 1)
 
 	// Wait for the contract to be exchanged
 	fmt.Println("Waiting for the contract to be exchanged...")
 	time.Sleep(2 * time.Second)
-
 
 	// Accept the contract on the second node
 	fmt.Println("Accepting the contract on the other peer...")
@@ -113,11 +82,12 @@ func main() {
 	}
 
 	fmt.Println("Contract active. Generate a block on regtest and press enter")
+	var input string
 	fmt.Scanln(&input)
 
 	// Settle the contract
 	fmt.Println("Settling the contract...")
-	err = alice.SettleContract(contract.Idx, oracleValue, oracleSig[:])
+	err = lit1.SettleContract(contract.Idx, oracleValue, oracleSig[:])
 	handleError(err)
 
 	fmt.Println("Contract settled. Mine two blocks to ensure contract outputs are claimed back to the nodes' wallets.\r\n\r\nDone.")
@@ -126,25 +96,24 @@ func main() {
 
 func connectNodes() error {
 	// Instruct both nodes to listen for incoming connections
-	err := alice.Listen(":2448")
+	err := lit1.Listen(":2448")
 	handleError(err)
-	err = bob.Listen(":2449")
-	handleError(err)
-	// Connect node 1 to node 2
-	lnAdr, err := bob.GetLNAddress()
+	err = lit2.Listen(":2449")
 	handleError(err)
 
-	err = alice.Connect(lnAdr, "127.0.0.1", 2449)
+	// Connect node 1 to node 2
+	lnAdr, err := lit2.GetLNAddress()
 	handleError(err)
+	lit1.Connect(lnAdr, "localhost", 2449)
 
 	return nil
 }
 
 func checkOracle() ([]uint64, error) {
 	// Fetch a list of oracles from both nodes
-	oracles1, err := alice.ListOracles()
+	oracles1, err := lit1.ListOracles()
 	handleError(err)
-	oracles2, err := bob.ListOracles()
+	oracles2, err := lit2.ListOracles()
 	handleError(err)
 
 	// Find the oracle we need in both lists
@@ -164,12 +133,12 @@ func checkOracle() ([]uint64, error) {
 
 	// If the oracle is not present on node 1, add it
 	if oracle1 == nil {
-		oracle1, err = alice.AddOracle(hex.EncodeToString(oraclePubKey[:]), "Tutorial")
+		oracle1, err = lit1.AddOracle(hex.EncodeToString(oraclePubKey[:]), "Tutorial")
 	}
 
 	// If the oracle is not present on node 2, add it
 	if oracle2 == nil {
-		oracle2, err = bob.AddOracle(hex.EncodeToString(oraclePubKey[:]), "Tutorial")
+		oracle2, err = lit2.AddOracle(hex.EncodeToString(oraclePubKey[:]), "Tutorial")
 	}
 
 	// Return the index the oracle has on both nodes
@@ -178,33 +147,33 @@ func checkOracle() ([]uint64, error) {
 
 func createContract(oracleIdx uint64) (*lnutil.DlcContract, error) {
 	// Create a new empty draft contract
-	contract, err := alice.NewContract()
+	contract, err := lit1.NewContract()
 	handleError(err)
 
 	// Configure the contract to use the oracle we need
-	err = alice.SetContractOracle(contract.Idx, oracleIdx)
+	err = lit1.SetContractOracle(contract.Idx, oracleIdx)
 	handleError(err)
 
 	// Set the settlement time to June 13, 2018 midnight UTC
-	err = alice.SetContractSettlementTime(contract.Idx, 1528848000)
+	err = lit1.SetContractSettlementTime(contract.Idx, 1528848000)
 	handleError(err)
 
 	// Set the coin type of the contract to Bitcoin Regtest
-	err = alice.SetContractCoinType(contract.Idx, coinType)
+	err = lit1.SetContractCoinType(contract.Idx, 1)
 	handleError(err)
 
 	// Configure the contract to use the R-point we need
-	err = alice.SetContractRPoint(contract.Idx, rPoint[:])
+	err = lit1.SetContractRPoint(contract.Idx, rPoint[:])
 	handleError(err)
 
 	// Set the contract funding to 1 BTC each
-	err = alice.SetContractFunding(contract.Idx, 1500000, 3000000)
+	err = lit1.SetContractFunding(contract.Idx, 100000000, 100000000)
 	handleError(err)
 
-	// Configure the contract division so that Alice get all the
-	// funds when the value is 45000, and Bob gets
-	// all the funds when the value is 1
-	err = alice.SetContractDivision(contract.Idx, 0, 45000)
+	// Configure the contract division so that we get all the
+	// funds when the value is 20000, and our counter party gets
+	// all the funds when the value is 10000
+	err = lit1.SetContractDivision(contract.Idx, 20000, 10000)
 	handleError(err)
 
 	return contract, nil
@@ -212,12 +181,12 @@ func createContract(oracleIdx uint64) (*lnutil.DlcContract, error) {
 
 func acceptContract() error {
 	// Get all contracts for node 2
-	contracts, err := bob.ListContracts()
+	contracts, err := lit2.ListContracts()
 	handleError(err)
 
 	for _, c := range contracts {
 		if c.Status == lnutil.ContractStatusOfferedToMe {
-			err := bob.AcceptContract(c.Idx)
+			err := lit2.AcceptContract(c.Idx)
 			return err
 		}
 	}
@@ -227,10 +196,11 @@ func acceptContract() error {
 
 func isContractActive(contractIdx uint64) (bool, error) {
 	// Fetch the contract from node 1
-	contract, err := alice.GetContract(contractIdx)
+	contract, err := lit1.GetContract(contractIdx)
 	if err != nil {
 		return false, err
 	}
 
 	return (contract.Status == lnutil.ContractStatusActive), nil
 }
+

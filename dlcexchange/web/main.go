@@ -16,14 +16,6 @@ import (
 
 const (
 	coinType    uint32 = 1
-	mName 			string = "navybluesilver.net"
-	mURL        string = "navybluesilver.net"
-	mHost       string = "128.199.173.181"
-	mPort 			uint32 = 2448
-	tName  			string = "Alice"
-	tHost       string = "localhost"
-	tPort       int32  = 8001
-	tListenPort uint32 = 2448
 )
 
 
@@ -31,11 +23,19 @@ var (
 	templates        = template.Must(template.ParseFiles("template/orderbook.html"))
 	certFile         = config.GetString("web.certFile")
 	keyFile          = config.GetString("web.keyFile")
+	port             = config.GetString("web.port")
+	tName  			     = config.GetString("trader.name")
+	tHost  			     = config.GetString("trader.ip")
+	tPort  			     = int32(config.GetInt("trader.port"))
+	mLNAddress       = config.GetString("counterparty.LNAddress")
+	mName       		 = config.GetString("counterparty.name")
+	mURL      		   = config.GetString("counterparty.url")
+	mHost            = config.GetString("counterparty.ip")
+	mPort            = uint32(config.GetInt("counterparty.port"))
+
 	fmap             = template.FuncMap{
 		"formatAsSatoshi": formatAsSatoshi,
 	}
-	port             = config.GetString("web.port")
-	mLNAddress  string = config.GetString("counterparty.LNAddress")
 
 )
 var c *counterparty.Counterparty
@@ -52,6 +52,8 @@ type OrderbookPage struct {
 	SPOT int
 	SettlementDate string
 	Cash int
+	Positions interface{}
+	Orders interface{}
 	Bids interface{}
 	Asks interface{}
 }
@@ -60,7 +62,7 @@ func main() {
 	c = &counterparty.Counterparty{Name: mName, LNAddress: mLNAddress, IP: mHost, Port: mPort, URL: mURL }
 
 	t, _ = trader.NewTrader(tName, tHost, tPort)
-	connect(t)
+	//connect(t)
 
 	//orderbook
 	http.HandleFunc("/", orderbookHandler)
@@ -107,6 +109,7 @@ func orderbookHandler(w http.ResponseWriter, r *http.Request) {
 	o.CounterpartyName = c.Name
 	o.Bids = t.GetBids()
 	o.Asks = t.GetAsks()
+	o.Orders, _ = t.GetOrders()
 	o.SPOT = t.GetCurrentSpot()
 	o.SettlementDate = fmt.Sprintf("%v",time.Unix(int64(trader.GetSettlementTime()), 0))
 	o.Cash = t.GetBalance(coinType)

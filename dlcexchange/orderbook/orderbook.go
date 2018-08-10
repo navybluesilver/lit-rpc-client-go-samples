@@ -11,6 +11,7 @@ type Order struct {
 	AskBidInd   string
 	Price       int
 	Quantity    int
+	Status			int
 }
 
 type Aggregates []struct {
