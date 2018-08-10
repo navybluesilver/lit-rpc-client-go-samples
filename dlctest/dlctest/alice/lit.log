@@ -1,0 +1,17 @@
+2018/08/10 15:56:59.903305 No file alice/privkey.hex, generating.
+2018/08/10 15:56:59.903366 passphrase: 
+2018/08/10 15:57:00.955261 repeat passphrase: 
+2018/08/10 15:57:01.115367 
+2018/08/10 15:57:01.115477 WARNING!! Key file not encrypted!!
+2018/08/10 15:57:01.115487 Anyone who can read the key file can take everything!
+2018/08/10 15:57:01.115505 You should start over and use a good passphrase!
+2018/08/10 15:57:01.115517 Saved unencrypted key at alice/privkey.hex
+2018/08/10 15:57:01.115557 WARNING!! Key file not encrypted!!
+2018/08/10 15:57:01.115568 Anyone who can read the key file can take everything!
+2018/08/10 15:57:01.115576 You should start over and use a good passphrase!
+2018/08/10 15:57:09.588456 WARNING!! Key file not encrypted!!
+2018/08/10 15:57:09.588500 Anyone who can read the key file can take everything!
+2018/08/10 15:57:09.588505 You should start over and use a good passphrase!
+2018/08/10 15:57:26.823556 WARNING!! Key file not encrypted!!
+2018/08/10 15:57:26.823618 Anyone who can read the key file can take everything!
+2018/08/10 15:57:26.823626 You should start over and use a good passphrase!
